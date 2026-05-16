@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>TV</title>
+<style>
+:root {
+  --bg:     #0c0c0c;
+  --s1:     #161616;
+  --s2:     #202020;
+  --s3:     #2a2a2a;
+  --text:   #f0f0f0;
+  --soft:   #777;
+  --border: rgba(255,255,255,0.07);
+  --accent: #F5A623;
+  --acc-dim:rgba(245,166,35,0.12);
+  --green:  #30D158;
+  --blue:   #3B82F6;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: -apple-system, "SF Pro Text", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ── LOADING ── */
+#loading {
+  position: fixed; inset: 0; z-index: 100;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 20px;
+}
+.load-icon { font-size: 52px; opacity: .25; }
+.load-title { font-size: 17px; font-weight: 600; color: var(--soft); }
+.prog-track { width: 200px; height: 3px; background: var(--s3); border-radius: 2px; overflow: hidden; }
+.prog-fill  { height: 100%; width: 0; background: var(--accent); border-radius: 2px; transition: width .3s; }
+.load-sub   { font-size: 13px; color: #3a3a3a; }
+
+/* ── HEADER ── */
+.header {
+  position: sticky; top: 0; z-index: 40;
+  background: rgba(12,12,12,0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: max(16px, env(safe-area-inset-top, 16px)) 16px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── SEARCH ── */
+.search-wrap { position: relative; margin-bottom: 10px; }
+.search-wrap svg {
+  position: absolute; left: 12px; top: 50%;
+  transform: translateY(-50%); opacity: .3; pointer-events: none;
+}
+#search {
+  width: 100%; padding: 11px 12px 11px 38px;
+  background: var(--s2); border: 1px solid var(--border);
+  border-radius: 12px; color: var(--text);
+  font-size: 16px; outline: none; -webkit-appearance: none;
+}
+#search::placeholder { color: #444; }
+#search:focus { border-color: var(--accent); }
+
+/* ── STATS ── */
+.stats {
+  display: flex; gap: 16px; font-size: 12px; color: #3a3a3a;
+  padding: 0 2px;
+}
+.stats b { color: #555; }
+
+/* ── CONTENT ── */
+#content {
+  padding: 12px 14px calc(env(safe-area-inset-bottom, 0px) + 24px);
+  max-width: 800px; margin: 0 auto;
+}
+
+/* ── SECTION (pure CSS collapse) ── */
+.sec { margin-bottom: 8px; }
+
+/* Hidden checkbox drives open/close */
+.sec-toggle { display: none; }
+
+.sec-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px;
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  cursor: pointer;
+  user-select: none;
+  transition: background .12s;
+}
+.sec-head:active { background: var(--s2); }
+
+/* When open */
+.sec-toggle:checked ~ .sec-head {
+  border-radius: 14px 14px 0 0;
+  border-bottom-color: transparent;
+}
+.sec-toggle:checked ~ .sec-body { display: block; }
+
+.sec-name {
+  flex: 1; font-size: 15px; font-weight: 700;
+  letter-spacing: -.02em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sec-count {
+  font-size: 12px; color: var(--soft);
+  background: var(--s3); padding: 2px 9px;
+  border-radius: 20px; flex-shrink: 0;
+}
+.sec-chev {
+  font-size: 12px; color: #444; flex-shrink: 0;
+  transition: transform .2s;
+}
+.sec-toggle:checked ~ .sec-head .sec-chev { transform: rotate(90deg); }
+
+/* ── CHANNEL BODY ── */
+.sec-body {
+  display: none;
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 14px 14px;
+  overflow: hidden;
+}
+
+/* ── CHANNEL ITEM ── */
+.ch {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none; color: var(--text);
+  transition: background .1s;
+}
+.ch:last-child { border-bottom: none; }
+.ch:active { background: var(--s2); }
+
+.ch-logo {
+  width: 38px; height: 38px; border-radius: 9px;
+  background: var(--s3); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: var(--soft);
+  overflow: hidden;
+}
+.ch-logo img { width: 100%; height: 100%; object-fit: contain; }
+
+.ch-name {
+  flex: 1; font-size: 16px; font-weight: 500;
+  letter-spacing: -.01em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ch-arr { font-size: 13px; color: #333; }
+
+/* ── SEARCH RESULTS ── */
+#search-results { display: none; }
+#search-results .ch { border-radius: 0; }
+#search-results .ch:first-child { border-radius: 14px 14px 0 0; }
+#search-results .ch:last-child  { border-radius: 0 0 14px 14px; border-bottom: none; }
+#search-results .ch:only-child  { border-radius: 14px; }
+
+.result-group {
+  font-size: 11px; color: #444; font-weight: 600;
+  letter-spacing: .06em; text-transform: uppercase;
+  padding: 10px 16px 4px;
+  background: var(--s1);
+}
+
+.empty { text-align: center; padding: 60px 20px; color: #333; font-size: 15px; }
+
+/* ── RESPONSIVE ── */
+@media (min-width: 600px) {
+  #content { padding-left: 20px; padding-right: 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="load-icon">📺</div>
+  <div class="load-title">Sender laden…</div>
+  <div class="prog-track"><div class="prog-fill" id="prog"></div></div>
+  <div class="load-sub" id="prog-txt">Verbinde…</div>
+</div>
+
+<!-- HEADER -->
+<div class="header" id="header" style="display:none">
+  <div class="search-wrap">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="6.5" cy="6.5" r="5" stroke="white" stroke-width="1.5"/>
+      <path d="M10.5 10.5L14 14" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <input type="search" id="search" placeholder="Sender suchen…" autocomplete="off">
+  </div>
+  <div class="stats">
+    <span><b id="stat-groups">0</b> Gruppen</span>
+    <span><b id="stat-ch">0</b> Sender</span>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div id="content" style="display:none">
+  <div id="search-results"></div>
+  <div id="groups"></div>
+</div>
+
+<script>
+/* ── CONFIG ── */
+var M3U = "https://raw.githubusercontent.com/Palma-1904/tv2/main/liste.m3u";
+
+/* ── DATA ── */
+var groupMap = {}; // group → [channels]
+var allCh    = [];
+var uid      = 0;
+
+/* ── PARSE ── */
+function parse(text) {
+  var lines = text.split(/\r?\n/);
+  var meta  = null;
+  groupMap  = {};
+  allCh     = [];
+
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (!line) continue;
+
+    if (line.startsWith("#EXTINF")) {
+      var nm = line.match(/,(.+)$/);
+      var lg = line.match(/tvg-logo="([^"]*)"/);
+      var gp = line.match(/group-title="([^"]*)"/);
+      meta = {
+        name:  nm ? nm[1].trim() : "?",
+        logo:  lg ? lg[1].trim() : "",
+        group: gp ? gp[1].trim() : "Andere"
+      };
+    } else if (meta && line && !line.startsWith("#")) {
+      var ch = { id: uid++, name: meta.name, logo: meta.logo, group: meta.group, url: line.trim() };
+      allCh.push(ch);
+      if (!groupMap[ch.group]) groupMap[ch.group] = [];
+      groupMap[ch.group].push(ch);
+      meta = null;
+    }
+  }
+}
+
+/* ── RENDER ── */
+function abbr(n) {
+  var w = n.replace(/[^\w ]/g,"").split(/\s+/);
+  return (w.length >= 2 ? w[0][0] + w[1][0] : n.substr(0,2)).toUpperCase();
+}
+function esc(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function chHTML(ch) {
+  var ab  = abbr(ch.name);
+  var logo = ch.logo
+    ? '<img src="' + esc(ch.logo) + '" onerror="this.parentNode.textContent=\'' + ab.replace(/'/g,"\\'") + '\'">'
+    : ab;
+  return '<a class="ch" href="outplayer://' + esc(ch.url) + '">' +
+    '<div class="ch-logo">' + logo + '</div>' +
+    '<span class="ch-name">' + esc(ch.name) + '</span>' +
+    '<span class="ch-arr">▶</span>' +
+    '</a>';
+}
+
+function renderGroups() {
+  var keys = Object.keys(groupMap).sort();
+  var html = "";
+  keys.forEach(function(g) {
+    var chs = groupMap[g];
+    var tid = "t" + uid++;
+    html += '<div class="sec">';
+    html += '<input type="checkbox" class="sec-toggle" id="' + tid + '">';
+    html += '<label class="sec-head" for="' + tid + '">';
+    html += '<span class="sec-name">' + esc(g) + '</span>';
+    html += '<span class="sec-count">' + chs.length + '</span>';
+    html += '<span class="sec-chev">›</span>';
+    html += '</label>';
+    html += '<div class="sec-body">';
+    chs.forEach(function(ch) { html += chHTML(ch); });
+    html += '</div></div>';
+  });
+  document.getElementById("groups").innerHTML = html;
+  document.getElementById("stat-groups").textContent = keys.length;
+  document.getElementById("stat-ch").textContent     = allCh.length;
+}
+
+/* ── SEARCH ── */
+document.getElementById("search").addEventListener("input", function() {
+  var q   = this.value.trim().toLowerCase();
+  var sr  = document.getElementById("search-results");
+  var grp = document.getElementById("groups");
+
+  if (!q) {
+    sr.style.display  = "none";
+    grp.style.display = "block";
+    sr.innerHTML = "";
+    return;
+  }
+
+  grp.style.display = "none";
+  var results = allCh.filter(function(ch) {
+    return ch.name.toLowerCase().indexOf(q) !== -1 ||
+           ch.group.toLowerCase().indexOf(q) !== -1;
+  });
+
+  if (!results.length) {
+    sr.innerHTML = '<div class="empty">Keine Treffer für „' + esc(q) + '"</div>';
+    sr.style.display = "block";
+    return;
+  }
+
+  // Group results by group
+  var byGroup = {};
+  results.forEach(function(ch) {
+    if (!byGroup[ch.group]) byGroup[ch.group] = [];
+    byGroup[ch.group].push(ch);
+  });
+
+  var html = "";
+  Object.keys(byGroup).sort().forEach(function(g) {
+    html += '<div class="result-group">' + esc(g) + '</div>';
+    byGroup[g].forEach(function(ch) { html += chHTML(ch); });
+  });
+
+  sr.innerHTML = html;
+  sr.style.display = "block";
+});
+
+/* ── FETCH ── */
+async function load() {
+  var prog    = document.getElementById("prog");
+  var progTxt = document.getElementById("prog-txt");
+
+  try {
+    var res = await fetch(M3U);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+
+    var cl     = parseInt(res.headers.get("Content-Length") || "0");
+    var reader = res.body.getReader();
+    var recv   = 0;
+    var chunks = [];
+
+    while (true) {
+      var ref = await reader.read();
+      if (ref.done) break;
+      chunks.push(ref.value);
+      recv += ref.value.length;
+      if (cl > 0) {
+        prog.style.width = Math.round(recv / cl * 85) + "%";
+        progTxt.textContent = Math.round(recv/1024) + " / " + Math.round(cl/1024) + " KB";
+      } else {
+        progTxt.textContent = Math.round(recv/1024) + " KB geladen…";
+      }
+    }
+
+    prog.style.width = "95%";
+    progTxt.textContent = "Verarbeite…";
+
+    var total = chunks.reduce(function(s,c){return s+c.length;},0);
+    var buf   = new Uint8Array(total);
+    var off   = 0;
+    chunks.forEach(function(c){ buf.set(c,off); off+=c.length; });
+    var text = new TextDecoder("utf-8").decode(buf);
+
+    parse(text);
+    prog.style.width = "100%";
+
+    setTimeout(function() {
+      document.getElementById("loading").style.display = "none";
+      document.getElementById("header").style.display  = "block";
+      document.getElementById("content").style.display = "block";
+      renderGroups();
+    }, 200);
+
+  } catch(e) {
+    document.getElementById("prog-txt").textContent = "Fehler: " + e.message;
+    prog.style.background = "#EF4444";
+    prog.style.width = "100%";
+  }
+}
+
+load();
+</script>
+</body>
+</html>
