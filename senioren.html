@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TV Senioren">
+<link rel="apple-touch-icon" href="seniorenicon.png">
+<title>Senioren TV</title>
+<style>
+*, *::before, *::after {
+  box-sizing: border-box; margin: 0; padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: #0f0f0f; /* Tiefes, augenschonendes Schwarz */
+  color: #f0f0f0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding: max(28px, env(safe-area-inset-top, 28px)) 18px calc(env(safe-area-inset-bottom, 0px) + 32px);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* ── LADEBILDSCHIRM ── */
+#loading {
+  position: fixed; inset: 0; background: #0f0f0f; z-index: 100;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+}
+.prog-bar { width: 220px; height: 8px; background: #222; border-radius: 4px; overflow: hidden; }
+.prog-fill { height: 100%; width: 0%; background: #0072CE; transition: width 0.3s; }
+
+/* ── SEKTIONEN ── */
+#app { display: none; }
+.section { margin-bottom: 40px; }
+.section-title {
+  font-size: 26px; font-weight: 800; letter-spacing: -.02em;
+  color: #ffffff; margin-bottom: 20px;
+  display: flex; align-items: center; gap: 12px;
+}
+.section-title .ico { font-size: 24px; }
+
+/* ── KACHEL-GRID (Riesige Buttons) ── */
+.grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
+}
+@media (min-width: 500px) { .grid { grid-template-columns: repeat(3, 1fr); gap: 20px; } }
+@media (min-width: 700px) { .grid { grid-template-columns: repeat(4, 1fr); gap: 20px; } }
+
+.card {
+  display: flex; flex-direction: column;
+  border-radius: 18px; overflow: hidden; text-decoration: none;
+  background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1);
+  transition: transform 0.1s, opacity 0.1s;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+.card:active { transform: scale(0.94); opacity: 0.8; }
+
+/* Obere Hälfte: Logo / Marke */
+.logo {
+  height: 90px; display: flex; align-items: center; justify-content: center;
+  font-size: 26px; font-weight: 900; letter-spacing: -.03em;
+  color: #fff; text-shadow: 0 2px 5px rgba(0,0,0,0.4);
+}
+
+/* Untere Hälfte: Der "echte", gesäuberte Sendername aus der Liste */
+.name {
+  padding: 12px 10px; font-size: 15px; font-weight: 700;
+  color: #e4e4e7; text-align: center; line-height: 1.2; letter-spacing: -.01em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  background: #222;
+}
+
+/* ── MARKENFARBEN ── */
+.sky    { background: linear-gradient(135deg, #005BAC, #0072CE); }
+.dazn   { background: linear-gradient(135deg, #111, #222); border-bottom: 4px solid #F8FF00; color: #F8FF00 !important; }
+.ard    { background: linear-gradient(135deg, #003F8C, #0057B8); }
+.zdf    { background: linear-gradient(135deg, #1A3E6E, #1F4E8C); }
+.sat1   { background: linear-gradient(135deg, #CC0000, #E8000F); }
+.rtl    { background: linear-gradient(135deg, #D45B00, #F06800); }
+.rtl2   { background: linear-gradient(135deg, #8B0000, #B00010); }
+.pro7   { background: linear-gradient(135deg, #C00010, #E0001A); }
+.kabel1 { background: linear-gradient(135deg, #005A8C, #0070AE); }
+.vox    { background: linear-gradient(135deg, #B00020, #D4002A); }
+.wdr    { background: linear-gradient(135deg, #003366, #004A99); }
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div style="font-size: 50px;">📺</div>
+  <div class="prog-bar"><div class="prog-fill" id="prog"></div></div>
+  <div style="color: #a1a1aa; font-weight: 600; font-size: 18px;" id="prog-text">Lade TV Programm...</div>
+</div>
+
+<div id="app">
+  
+  <div class="section" id="sec-fussball" style="display:none;">
+    <div class="section-title"><span class="ico">⚽️</span> Fussball</div>
+    <div class="grid" id="grid-fussball"></div>
+  </div>
+
+  <div class="section" id="sec-allgemein" style="display:none;">
+    <div class="section-title"><span class="ico">📺</span> Allgemein</div>
+    <div class="grid" id="grid-allgemein"></div>
+  </div>
+
+</div>
+
+<script>
+// 🔥 Hier ist jetzt die neue Liste hinterlegt!
+const M3U_URL = "seniorenliste.m3u";
+
+// ── KONFIGURATION DER SENIOREN-SENDER ──
+const TARGETS = [
+  // FUSSBALL
+  { sec: "Fussball", regex: /sky.*(?:bundesliga|buli).*1\b/i, css: "sky", logoTxt: "SKY 1" },
+  { sec: "Fussball", regex: /sky.*(?:bundesliga|buli).*2\b/i, css: "sky", logoTxt: "SKY 2" },
+  { sec: "Fussball", regex: /sky.*(?:bundesliga|buli).*3\b/i, css: "sky", logoTxt: "SKY 3" },
+  { sec: "Fussball", regex: /sky.*(?:bundesliga|buli).*4\b/i, css: "sky", logoTxt: "SKY 4" },
+  { sec: "Fussball", regex: /sky.*(?:bundesliga|buli).*5\b/i, css: "sky", logoTxt: "SKY 5" },
+  { sec: "Fussball", regex: /sky.*(?:bundesliga|buli).*6\b/i, css: "sky", logoTxt: "SKY 6" },
+  { sec: "Fussball", regex: /dazn\s*1\b/i, css: "dazn", logoTxt: "DAZN 1" },
+  { sec: "Fussball", regex: /dazn\s*2\b/i, css: "dazn", logoTxt: "DAZN 2" },
+
+  // ALLGEMEIN
+  { sec: "Allgemein", regex: /das erste|ard\b/i, css: "ard", logoTxt: "ARD" },
+  { sec: "Allgemein", regex: /^.*zdf\b.*$/i, css: "zdf", logoTxt: "ZDF" },
+  { sec: "Allgemein", regex: /sat\.?1\b/i, css: "sat1", logoTxt: "SAT.1" },
+  { sec: "Allgemein", regex: /rtl\b(?!\s*2)(?!\s*zwei)(?!\s*nitro|plus|crime)/i, css: "rtl", logoTxt: "RTL" },
+  { sec: "Allgemein", regex: /rtl\s*2\b|rtl\s*zwei\b/i, css: "rtl2", logoTxt: "RTL 2" },
+  { sec: "Allgemein", regex: /prosieben|pro\s*7\b/i, css: "pro7", logoTxt: "PRO 7" },
+  { sec: "Allgemein", regex: /kabel\s*1\b|kabel\s*eins\b/i, css: "kabel1", logoTxt: "K1" },
+  { sec: "Allgemein", regex: /vox\b/i, css: "vox", logoTxt: "VOX" },
+  { sec: "Allgemein", regex: /wdr\b/i, css: "wdr", logoTxt: "WDR" }
+];
+
+function getShortName(name) {
+  let s = name;
+  s = s.replace(/^([A-Z]{2,3}[:\|-]\s*)/i, '').replace(/\b(FHD|HD|SD|UHD|4K|RAW|HEVC|50fps|VIP)\b/gi, '').replace(/[_|\[\]\(\)]/g, ' ');
+  s = s.replace(/\bSky Sport Bundesliga\b/gi, 'Sky Buli').replace(/\bSky Bundesliga\b/gi, 'Sky Buli').replace(/\bBundesliga\b/gi, 'Buli');
+  return s.replace(/\s+/g, ' ').trim(); 
+}
+
+function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+async function loadData() {
+  try {
+    let res = await fetch(M3U_URL);
+    if (!res.ok) throw new Error("Liste nicht gefunden (seniorenliste.m3u)");
+    let text = await res.text();
+    
+    let lines = text.split("\n");
+    let parsedChannels = [];
+    let meta = null;
+
+    for (let i = 0; i < lines.length; i++) {
+      let line = lines[i].trim();
+      if (line.startsWith("#EXTINF")) {
+        meta = { name: (line.match(/,(.+)$/) || ["","?"])[1].trim() };
+      } else if (meta && line && !line.startsWith("#")) {
+        parsedChannels.push({ name: meta.name, url: line });
+        meta = null;
+      }
+    }
+
+    let fussballHtml = "";
+    let allgemeinHtml = "";
+
+    TARGETS.forEach(target => {
+      let match = parsedChannels.find(ch => target.regex.test(ch.name));
+      
+      if (match) {
+        let cleanName = getShortName(match.name);
+        let href = "outplayer://" + match.url;
+        
+        let cardHtml = `
+          <a class="card" href="${esc(href)}">
+            <div class="logo ${target.css}">${target.logoTxt}</div>
+            <div class="name">${esc(cleanName)}</div>
+          </a>
+        `;
+
+        if (target.sec === "Fussball") fussballHtml += cardHtml;
+        if (target.sec === "Allgemein") allgemeinHtml += cardHtml;
+      }
+    });
+
+    if (fussballHtml) {
+      document.getElementById("grid-fussball").innerHTML = fussballHtml;
+      document.getElementById("sec-fussball").style.display = "block";
+    }
+    if (allgemeinHtml) {
+      document.getElementById("grid-allgemein").innerHTML = allgemeinHtml;
+      document.getElementById("sec-allgemein").style.display = "block";
+    }
+
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("app").style.display = "block";
+
+  } catch(e) {
+    document.getElementById("prog-text").textContent = "Fehler: " + e.message;
+    document.getElementById("prog").style.background = "#FF3B30";
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>
