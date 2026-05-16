@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Mein TV</title>
+<style>
+:root {
+  --bg:      #0a0a0a;
+  --panel:   #1c1c1e;
+  --panel-hv:#2c2c2e;
+  --text:    #ffffff;
+  --soft:    #a1a1aa;
+  --tv:      #0A84FF;
+  --mov:     #BF5AF2;
+  --ser:     #32D74B;
+  --radius:  16px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { 
+  height: 100vh; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+  -webkit-font-smoothing: antialiased; 
+  display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* ── HEADER & NAVIGATION ── */
+.header {
+  padding: max(20px, env(safe-area-inset-top, 20px)) 20px 15px;
+  background: var(--bg); z-index: 10;
+}
+.top-bar {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+}
+.back-btn {
+  display: none; align-items: center; justify-content: center; gap: 4px;
+  background: var(--panel); border: none; color: var(--tv);
+  height: 44px; padding: 0 16px; border-radius: 12px;
+  font-size: 16px; font-weight: 600; cursor: pointer;
+}
+.back-btn:active { background: var(--panel-hv); }
+.search-wrap { flex: 1; position: relative; }
+#search {
+  width: 100%; height: 44px; padding: 0 16px 0 40px;
+  background: var(--panel); border: 2px solid transparent;
+  border-radius: 12px; color: var(--text); font-size: 16px; outline: none;
+}
+#search:focus { border-color: var(--tv); }
+.search-icon { position: absolute; left: 14px; top: 12px; font-size: 18px; opacity: 0.5; }
+
+/* ── TABS ── */
+.tabs { display: flex; gap: 8px; }
+.tab {
+  flex: 1; padding: 12px 8px; border-radius: 12px;
+  background: var(--panel); border: 2px solid transparent;
+  color: var(--soft); font-size: 15px; font-weight: 600;
+  display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer;
+}
+.tab span:last-child { font-size: 12px; font-weight: 500; opacity: 0.7; }
+.tab.active-tv  { background: rgba(10,132,255,0.15); border-color: var(--tv); color: var(--tv); }
+.tab.active-mov { background: rgba(191,90,242,0.15); border-color: var(--mov); color: var(--mov); }
+.tab.active-ser { background: rgba(50,215,75,0.15);  border-color: var(--ser); color: var(--ser); }
+
+/* ── CONTENT AREA ── */
+#content {
+  flex: 1; overflow-y: auto; padding: 0 20px calc(env(safe-area-inset-bottom, 20px) + 20px);
+  -webkit-overflow-scrolling: touch;
+}
+.view-title { font-size: 22px; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+
+/* ── GRID SYSTEM (Kacheln) ── */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+@media(min-width: 600px) { .grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; } }
+
+.cat-card {
+  background: var(--panel); border-radius: var(--radius); padding: 20px 16px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; cursor: pointer; min-height: 110px; transition: transform 0.1s;
+}
+.cat-card:active { transform: scale(0.96); background: var(--panel-hv); }
+.cat-name { font-size: 16px; font-weight: 600; margin-bottom: 6px; line-height: 1.2; }
+.cat-count { font-size: 13px; color: var(--soft); font-weight: 500; }
+
+.ch-card {
+  background: var(--panel); border-radius: var(--radius);
+  display: flex; flex-direction: column; overflow: hidden;
+  text-decoration: none; transition: transform 0.1s; cursor: pointer;
+}
+.ch-card:active { transform: scale(0.96); }
+.ch-logo {
+  height: 90px; display: flex; align-items: center; justify-content: center;
+  background: #252525; padding: 10px; font-size: 18px; font-weight: 800; color: #fff;
+  text-align: center; line-height: 1.2; word-break: break-word; text-transform: uppercase;
+}
+.ch-logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.ch-name {
+  padding: 10px; font-size: 13px; font-weight: 600; color: var(--text);
+  text-align: center; line-height: 1.3; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 42px;
+}
+
+/* ── EPISODEN ANSICHT (Netflix-Style) ── */
+.season-title { 
+  font-size: 20px; font-weight: 700; margin: 28px 0 14px; 
+  color: var(--text); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; 
+}
+.ep-card {
+  background: var(--panel); border-radius: 12px; padding: 14px;
+  display: flex; align-items: center; gap: 14px; margin-bottom: 12px;
+  text-decoration: none; color: var(--text); transition: transform 0.1s;
+}
+.ep-card:active { transform: scale(0.97); background: var(--panel-hv); }
+.ep-num {
+  font-size: 18px; font-weight: 800; color: var(--ser); width: 44px; text-align: center;
+  background: rgba(50,215,75,0.1); padding: 8px 0; border-radius: 8px;
+}
+.ep-info { flex: 1; overflow: hidden; }
+.ep-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ep-play { font-size: 13px; color: var(--soft); font-weight: 500; }
+
+/* ── LOADING & EMPTY ── */
+#loading {
+  position: fixed; inset: 0; background: var(--bg); z-index: 100;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+}
+.prog-bar { width: 200px; height: 6px; background: var(--panel); border-radius: 3px; overflow: hidden; }
+.prog-fill { height: 100%; width: 0%; background: var(--tv); transition: width 0.3s; }
+.empty { text-align: center; padding: 60px 20px; color: var(--soft); font-size: 16px; }
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div style="font-size: 40px">📺</div>
+  <div class="prog-bar"><div class="prog-fill" id="prog"></div></div>
+  <div style="color: var(--soft); font-weight: 600;" id="prog-text">Lade Sender...</div>
+</div>
+
+<div class="header" id="app-header" style="display:none;">
+  <div class="top-bar">
+    <button class="back-btn" id="btn-back" onclick="goBack()">&#10094; Zurück</button>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="search" id="search" placeholder="Sender, Filme oder Ordner suchen..." oninput="onSearch(this.value)">
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active-tv" onclick="switchTab('tv')" id="tab-tv">
+      <span>📺 TV</span><span id="cnt-tv">-</span>
+    </div>
+    <div class="tab" onclick="switchTab('mov')" id="tab-mov">
+      <span>🎬 Filme</span><span id="cnt-mov">-</span>
+    </div>
+    <div class="tab" onclick="switchTab('ser')" id="tab-ser">
+      <span>📂 Serien</span><span id="cnt-ser">-</span>
+    </div>
+  </div>
+</div>
+
+<div id="content"></div>
+
+<script>
+const M3U_URL = "liste2.m3u";
+
+var db = { tv: {}, mov: {}, ser: {} };
+var currentTab = "tv";
+var viewMode = "cats"; // "cats", "channels", "search", "episodes"
+var lastViewMode = "cats"; // Merkt sich, wo man herkam
+var activeGroup = "";
+var searchVal = "";
+
+// 🕵️ Geheimer Speicher für Xtream Codes Zugangsdaten
+var xcCredentials = null;
+var activeSeriesData = null;
+
+// Erkennung von Filmen & Serien
+function detectType(url, group) {
+  var u = url.toLowerCase();
+  var g = group.toLowerCase();
+  if (g.includes("serie") || g.includes("staffel") || g.includes("season") || /s\d{2}e?\d/.test(g) || u.includes("/series/")) return "ser";
+  if (g.includes("film") || g.includes("movie") || g.includes("vod") || g.includes("kino") || u.includes("/movie/")) return "mov";
+  if (/\.(mkv|mp4|avi|mov|wmv|m4v|flv)(\?|$)/.test(u)) return "mov";
+  return "tv";
+}
+
+function parseM3U(text) {
+  var data = { tv: {}, mov: {}, ser: {} };
+  var lines = text.split("\n");
+  var meta = null;
+  
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (line.startsWith("#EXTINF")) {
+      meta = {
+        name:  (line.match(/,(.+)$/) || ["","?"])[1].trim(),
+        logo:  (line.match(/tvg-logo="([^"]*)"/) || ["",""])[1].trim(),
+        group: (line.match(/group-title="([^"]*)"/) || ["","Andere"])[1].trim()
+      };
+    } else if (meta && line && !line.startsWith("#")) {
+      var type = detectType(line, meta.group);
+      if (!data[type][meta.group]) data[type][meta.group] = [];
+      data[type][meta.group].push({ name: meta.name, logo: meta.logo, url: line, type: type });
+      
+      // 🔥 Der Magie-Trick: Zugangsdaten aus den URLs schnüffeln
+      if (!xcCredentials && line.startsWith("http")) {
+         let match = line.match(/^(https?:\/\/[^\/]+)\/(?:live|movie|series)\/([^\/]+)\/([^\/]+)\//i);
+         if (match) {
+            xcCredentials = { server: match[1], user: match[2], pass: match[3] };
+         }
+      }
+      meta = null;
+    }
+  }
+  return data;
+}
+
+// Escaping-Funktionen (Damit Namen mit " ' " nicht die App crashen)
+function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function escJS(s) { return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, "&quot;"); }
+
+function switchTab(t) {
+  currentTab = t;
+  viewMode = "cats";
+  activeGroup = "";
+  document.getElementById("search").value = "";
+  searchVal = "";
+  ["tv","mov","ser"].forEach(x => {
+    document.getElementById("tab-"+x).className = "tab" + (x === t ? " active-"+x : "");
+  });
+  render();
+}
+
+function goBack() {
+  if (viewMode === "episodes") {
+    viewMode = lastViewMode; // Geht zurück zur Liste oder Suche
+  } else if (viewMode === "channels" || viewMode === "search") {
+    viewMode = "cats";
+    activeGroup = "";
+    searchVal = "";
+    document.getElementById("search").value = "";
+  }
+  render();
+}
+
+function openGroup(groupName) {
+  viewMode = "channels";
+  activeGroup = groupName;
+  document.getElementById("search").value = "";
+  searchVal = "";
+  render();
+}
+
+function onSearch(val) {
+  searchVal = val.trim().toLowerCase();
+  viewMode = searchVal ? "search" : "cats";
+  render();
+}
+
+// Smarte Kürzungsfunktion
+function getShortName(name) {
+  let s = name;
+  s = s.replace(/^([A-Z]{2,3}[:\|-]\s*)/i, ''); 
+  s = s.replace(/\b(FHD|HD|SD|UHD|4K|RAW|HEVC|50fps|VIP)\b/gi, '');
+  s = s.replace(/[_|\[\]\(\)]/g, ' ');
+  s = s.replace(/\bSky Sport Bundesliga\b/gi, 'Sky Buli');
+  s = s.replace(/\bSky Bundesliga\b/gi, 'Sky Buli');
+  s = s.replace(/\bBundesliga\b/gi, 'Buli');
+  s = s.replace(/\bSportdigital\b/gi, 'SpDi');
+  s = s.replace(/\bAmazon Prime\b/gi, 'Prime');
+  s = s.replace(/\s+/g, ' ').trim();
+  return s; 
+}
+
+// 🔥 Die neue Serien-Ladefunktion
+async function openSeries(url, name, logo) {
+  if (!xcCredentials) {
+    alert("Fehler: Konnte die Zugangsdaten nicht aus der M3U auslesen.");
+    return;
+  }
+  
+  // Extrahiere die Serien-ID aus der URL (z.B. .../series/user/pass/1234)
+  let m = url.match(/series\/[^\/]+\/[^\/]+\/(\d+)/i);
+  if (!m) { alert("Serien-Link ist ungültig."); return; }
+  let seriesId = m[1];
+  
+  lastViewMode = viewMode; // Merken, ob man aus "search" oder "channels" kam
+  viewMode = "episodes"; 
+  document.getElementById("btn-back").style.display = "flex";
+  document.getElementById("content").innerHTML = '<div class="empty">Lädt Episoden direkt vom Server...</div>';
+
+  let apiUrl = `${xcCredentials.server}/player_api.php?username=${xcCredentials.user}&password=${xcCredentials.pass}&action=get_series_info&series_id=${seriesId}`;
+  let proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(apiUrl);
+  
+  try {
+    let res = await fetch(apiUrl).catch(() => fetch(proxyUrl)); // Zuerst direkt, dann via Proxy versuchen
+    let json = await res.json();
+    
+    if (!json || !json.episodes) throw new Error("Keine Episoden");
+    
+    activeSeriesData = { name: name, logo: logo, data: json };
+    render();
+  } catch(e) {
+    document.getElementById("content").innerHTML = '<div class="empty">Fehler beim Abrufen der Staffeln.</div>';
+  }
+}
+
+// RENDER FUNKTIONEN
+function render() {
+  var content = document.getElementById("content");
+  var backBtn = document.getElementById("btn-back");
+  var html = "";
+
+  backBtn.style.display = (viewMode === "channels" || viewMode === "search" || viewMode === "episodes") ? "flex" : "none";
+
+  if (viewMode === "episodes") {
+    html = renderEpisodesView();
+    content.innerHTML = html;
+    return;
+  }
+
+  if (viewMode === "search") {
+    html += '<div class="view-title">Suchergebnisse</div><div class="grid">';
+    var found = 0;
+    Object.keys(db[currentTab]).forEach(g => {
+      db[currentTab][g].forEach(ch => {
+        if (ch.name.toLowerCase().includes(searchVal) || g.toLowerCase().includes(searchVal)) {
+          html += renderChannelCard(ch);
+          found++;
+        }
+      });
+    });
+    html += '</div>';
+    content.innerHTML = found ? html : '<div class="empty">Keine Ergebnisse gefunden.</div>';
+    return;
+  }
+
+  if (viewMode === "cats") {
+    var groups = db[currentTab];
+    var keys = Object.keys(groups).sort();
+    if (keys.length === 0) { content.innerHTML = '<div class="empty">Keine Inhalte</div>'; return; }
+    
+    html += '<div class="view-title">Kategorien</div><div class="grid">';
+    keys.forEach(g => {
+      html += `<div class="cat-card" onclick="openGroup('${esc(g)}')">
+                 <div class="cat-name">${esc(g)}</div>
+                 <div class="cat-count">${groups[g].length} Sender</div>
+               </div>`;
+    });
+    html += '</div>';
+    content.innerHTML = html;
+  } 
+  else if (viewMode === "channels") {
+    var chans = db[currentTab][activeGroup] || [];
+    html += `<div class="view-title">${esc(activeGroup)}</div><div class="grid">`;
+    chans.forEach(ch => { html += renderChannelCard(ch); });
+    html += '</div>';
+    content.innerHTML = html;
+  }
+}
+
+function renderChannelCard(ch) {
+  var shortName = getShortName(ch.name); 
+  var logoHtml = ch.logo ? `<img src="${esc(ch.logo)}" onerror="this.parentNode.textContent='${esc(shortName)}'">` : esc(shortName);
+  
+  // Wenn es eine Serie ist, laden wir unseren eigenen Serien-Browser auf Klick!
+  if (ch.type === "ser") {
+    return `<div class="ch-card" onclick="openSeries('${escJS(ch.url)}', '${escJS(ch.name)}', '${escJS(ch.logo)}')">
+              <div class="ch-logo">${logoHtml}</div>
+              <div class="ch-name">${esc(shortName)}</div>
+            </div>`;
+  } 
+  // Ansonsten normal an den Outplayer schicken
+  else {
+    var href = "outplayer://" + ch.url;
+    return `<a class="ch-card" href="${esc(href)}">
+              <div class="ch-logo">${logoHtml}</div>
+              <div class="ch-name">${esc(shortName)}</div>
+            </a>`;
+  }
+}
+
+function renderEpisodesView() {
+  if (!activeSeriesData) return "";
+  var data = activeSeriesData.data;
+  var html = `<div class="view-title">${esc(activeSeriesData.name)}</div>`;
+  
+  let epsObj = data.episodes || {};
+  // Sicherheits-Check, falls Episoden nicht gruppiert zurückkommen
+  if (Array.isArray(epsObj)) epsObj = { "1": epsObj }; 
+
+  let seasons = Object.keys(epsObj).sort((a,b) => parseInt(a)-parseInt(b));
+  
+  if (seasons.length === 0) return html + '<div class="empty">Keine Episoden verfügbar.</div>';
+  
+  seasons.forEach(s => {
+     html += `<div class="season-title">Staffel ${s}</div>`;
+     let eps = epsObj[s] || [];
+     eps.forEach(ep => {
+         let ext = ep.container_extension || "mkv";
+         let playUrl = `${xcCredentials.server}/series/${xcCredentials.user}/${xcCredentials.pass}/${ep.id}.${ext}`;
+         let title = ep.title || `Episode ${ep.episode_num}`;
+         html += `
+         <a class="ep-card" href="outplayer://${esc(playUrl)}">
+            <div class="ep-num">${ep.episode_num}</div>
+            <div class="ep-info">
+               <div class="ep-title">${esc(title)}</div>
+               <div class="ep-play">▶ Im Outplayer abspielen</div>
+            </div>
+         </a>`;
+     });
+  });
+  return html;
+}
+
+// ── INIT ──
+async function loadData() {
+  try {
+    var res = await fetch(M3U_URL);
+    if (!res.ok) throw new Error("Netzwerkfehler");
+    var text = await res.text();
+    db = parseM3U(text);
+    
+    ["tv","mov","ser"].forEach(t => {
+      var sum = 0; Object.values(db[t]).forEach(arr => sum += arr.length);
+      document.getElementById("cnt-"+t).textContent = sum;
+    });
+
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("app-header").style.display = "block";
+    render();
+  } catch(e) {
+    document.getElementById("prog-text").textContent = "Fehler beim Laden (liste2.m3u fehlt?)";
+    document.getElementById("prog").style.background = "#FF3B30";
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>
