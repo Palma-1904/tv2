@@ -8,19 +8,24 @@
 <title>Mein TV</title>
 <style>
 :root {
-  --bg:      #000000;
-  --panel:   #1c1c1e;
-  --panel-hv:#2c2c2e;
-  --text:    #ffffff;
+  --bg-top:  #0f0f13;
+  --bg-bot:  #000000;
+  --panel:   #18181b;
+  --panel-hv:#27272a;
+  --text:    #f4f4f5;
   --soft:    #a1a1aa;
   --tv:      #0A84FF;
   --mov:     #BF5AF2;
   --ser:     #32D74B;
   --radius:  16px;
+  --border:  rgba(255, 255, 255, 0.08);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 body { 
-  height: 100vh; background: var(--bg); color: var(--text);
+  height: 100vh; 
+  background: linear-gradient(135deg, var(--bg-top) 0%, var(--bg-bot) 100%);
+  background-attachment: fixed;
+  color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
   -webkit-font-smoothing: antialiased; 
   display: flex; flex-direction: column; overflow: hidden;
@@ -35,9 +40,9 @@ body {
 /* ── HEADER & NAVIGATION (Glassmorphism) ── */
 .header {
   padding: max(20px, env(safe-area-inset-top, 20px)) 20px 15px;
-  background: rgba(10, 10, 10, 0.75);
+  background: rgba(10, 10, 12, 0.8);
   backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid var(--border);
   position: sticky; top: 0; z-index: 50;
 }
 .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; height: 44px; }
@@ -47,123 +52,137 @@ body {
   font-size: 17px; font-weight: 600; cursor: pointer; padding: 0 8px 0 0;
 }
 .back-btn:active { opacity: 0.6; }
-.page-title { font-size: 17px; font-weight: 700; text-align: center; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.page-title { font-size: 18px; font-weight: 700; text-align: center; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.3px; }
 .top-spacer { width: 70px; } 
 
 .search-wrap { position: relative; margin-bottom: 16px; }
 #search {
-  width: 100%; height: 40px; padding: 0 16px 0 40px;
-  background: rgba(255,255,255,0.1); border: none;
+  width: 100%; height: 42px; padding: 0 16px 0 40px;
+  background: rgba(255,255,255,0.08); border: 1px solid transparent;
   border-radius: 12px; color: var(--text); font-size: 16px; outline: none;
+  transition: all 0.2s;
 }
-#search:focus { background: rgba(255,255,255,0.15); }
-.search-icon { position: absolute; left: 14px; top: 10px; font-size: 16px; opacity: 0.5; }
+#search:focus { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.2); }
+.search-icon { position: absolute; left: 14px; top: 12px; font-size: 16px; opacity: 0.5; }
 
 /* ── TABS ── */
-.tabs { display: flex; gap: 8px; }
+.tabs { display: flex; gap: 10px; }
 .tab {
-  flex: 1; padding: 10px 4px; border-radius: 10px;
-  background: rgba(255,255,255,0.05); color: var(--soft);
+  flex: 1; padding: 10px 4px; border-radius: 12px;
+  background: rgba(255,255,255,0.04); color: var(--soft); border: 1px solid transparent;
   font-size: 14px; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; transition: 0.2s;
 }
-.tab span:last-child { font-size: 11px; font-weight: 500; opacity: 0.7; }
-.tab.active-tv  { background: rgba(10,132,255,0.2); color: var(--tv); }
-.tab.active-mov { background: rgba(191,90,242,0.2); color: var(--mov); }
-.tab.active-ser { background: rgba(50,215,75,0.2);  color: var(--ser); }
+.tab span:last-child { font-size: 11px; font-weight: 500; opacity: 0.6; }
+/* Edler Glow-Effekt für aktive Tabs */
+.tab.active-tv  { background: rgba(10,132,255,0.15); border-color: rgba(10,132,255,0.3); color: var(--tv); box-shadow: 0 4px 15px rgba(10,132,255,0.15); }
+.tab.active-mov { background: rgba(191,90,242,0.15); border-color: rgba(191,90,242,0.3); color: var(--mov); box-shadow: 0 4px 15px rgba(191,90,242,0.15); }
+.tab.active-ser { background: rgba(50,215,75,0.15);  border-color: rgba(50,215,75,0.3); color: var(--ser); box-shadow: 0 4px 15px rgba(50,215,75,0.15); }
 
 /* ── CONTENT AREA ── */
 #content {
   flex: 1; overflow-y: auto; padding: 20px 20px calc(env(safe-area-inset-bottom, 20px) + 20px);
   -webkit-overflow-scrolling: touch;
 }
-.view-title { font-size: 22px; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+.view-title { font-size: 24px; font-weight: 700; margin-bottom: 18px; color: var(--text); letter-spacing: -0.5px; }
 
 /* ── GRID SYSTEM ── */
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; }
-@media(min-width: 600px) { .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; } }
+@media(min-width: 600px) { .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 18px; } }
 .grid.portrait { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
 @media(min-width: 600px) { .grid.portrait { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); } }
 
 .cat-card {
-  background: var(--panel); border-radius: var(--radius); padding: 20px 16px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 16px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   text-align: center; cursor: pointer; min-height: 110px; transition: transform 0.1s;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 .cat-card:active { transform: scale(0.96); background: var(--panel-hv); }
-.cat-card.special { background: linear-gradient(135deg, #2a2a2e, #1c1c1e); border: 1px solid rgba(255,255,255,0.1); }
-.cat-name { font-size: 16px; font-weight: 600; margin-bottom: 6px; line-height: 1.2; }
-.cat-count { font-size: 13px; color: var(--soft); font-weight: 500; }
+.cat-card.special { background: linear-gradient(135deg, #27272a, #18181b); border-color: rgba(255,255,255,0.15); }
+.cat-name { font-size: 17px; font-weight: 600; margin-bottom: 6px; line-height: 1.2; }
+.cat-count { font-size: 14px; color: var(--soft); font-weight: 500; }
 
 .ch-card {
-  background: var(--panel); border-radius: var(--radius); position: relative;
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); position: relative;
   display: flex; flex-direction: column; overflow: hidden; cursor: pointer; transition: transform 0.1s;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 .ch-card:active { transform: scale(0.96); }
 .ch-logo {
   height: 90px; display: flex; align-items: center; justify-content: center;
-  background: #151515; padding: 10px; font-size: 18px; font-weight: 800; color: #fff;
+  background: rgba(0,0,0,0.3); padding: 10px; font-size: 18px; font-weight: 800; color: #fff;
   text-align: center; line-height: 1.2; word-break: break-word; text-transform: uppercase;
 }
-.ch-logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.ch-logo img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4)); }
 .ch-name {
-  padding: 10px; font-size: 13px; font-weight: 600; color: var(--text);
+  padding: 12px 10px; font-size: 14px; font-weight: 600; color: var(--text);
   text-align: center; line-height: 1.3; display: -webkit-box;
-  -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 42px;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 48px;
 }
 
-.ch-card.portrait .ch-logo { height: 160px; padding: 0; background: #222; }
-.ch-card.portrait .ch-logo img { object-fit: cover; width: 100%; height: 100%; }
+.ch-card.portrait .ch-logo { height: 160px; padding: 0; background: #111; }
+.ch-card.portrait .ch-logo img { object-fit: cover; width: 100%; height: 100%; border-radius: var(--radius) var(--radius) 0 0; }
 .ch-card.portrait .ch-name { display: none; } 
 
 /* Favoriten & Eigene Listen Buttons */
-.fav-btn {
-  position: absolute; top: 6px; right: 6px; width: 28px; height: 28px;
-  background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+.fav-btn, .list-btn {
+  position: absolute; top: 8px; width: 30px; height: 30px;
+  background: rgba(0,0,0,0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  font-size: 14px; border: none; color: #fff; cursor: pointer; z-index: 5;
+  font-size: 15px; border: 1px solid rgba(255,255,255,0.1); color: #fff; cursor: pointer; z-index: 5;
 }
+.fav-btn { right: 8px; }
 .fav-btn.active { color: #FF3B30; }
-
-.list-btn {
-  position: absolute; top: 6px; left: 6px; width: 28px; height: 28px;
-  background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
-  border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  font-size: 15px; font-weight: bold; border: none; color: #fff; cursor: pointer; z-index: 5;
-}
+.list-btn { left: 8px; font-weight: bold; }
 
 /* ── EPISODEN ANSICHT ── */
 .season-title { 
-  font-size: 20px; font-weight: 700; margin: 28px 0 14px; 
-  color: var(--text); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; 
+  font-size: 21px; font-weight: 700; margin: 32px 0 16px; 
+  color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 10px; 
 }
 .ep-card {
-  background: var(--panel); border-radius: 12px; padding: 14px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 14px;
   display: flex; align-items: center; gap: 14px; margin-bottom: 12px;
   text-decoration: none; color: var(--text); transition: transform 0.1s; cursor: pointer;
 }
 .ep-card:active { transform: scale(0.97); background: var(--panel-hv); }
 .ep-num {
-  font-size: 18px; font-weight: 800; color: var(--ser); width: 44px; text-align: center;
-  background: rgba(50,215,75,0.1); padding: 8px 0; border-radius: 8px;
+  font-size: 18px; font-weight: 800; color: var(--ser); width: 46px; text-align: center;
+  background: rgba(50,215,75,0.15); padding: 10px 0; border-radius: 10px;
 }
 .ep-info { flex: 1; overflow: hidden; }
-.ep-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ep-play { font-size: 13px; color: var(--soft); font-weight: 500; }
+.ep-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ep-play { font-size: 14px; color: var(--soft); font-weight: 500; }
+
+/* ── IPHONE OPTIMIERUNG (Größere Schriften & Platzierung) ── */
+@media (max-width: 450px) {
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } /* Zwingt 2 Spalten auf dem iPhone */
+  .grid.portrait { grid-template-columns: repeat(3, 1fr); gap: 10px; } /* 3 Spalten für Film-Plakate */
+  .page-title { font-size: 19px; }
+  .view-title { font-size: 22px; margin-bottom: 14px; }
+  .cat-name { font-size: 18px; }
+  .ch-name { font-size: 15px; height: 50px; } /* Größerer Sendername */
+  .tab { font-size: 15px; }
+  .tab span:last-child { font-size: 12px; }
+  .ep-title { font-size: 17px; }
+  .search-wrap { margin-bottom: 12px; }
+  #search { font-size: 17px; height: 44px; } /* Besseres Antippen auf Mobile */
+}
 
 /* ── LOADING ── */
 #loading {
-  position: fixed; inset: 0; background: var(--bg); z-index: 100;
+  position: fixed; inset: 0; background: var(--bg-top); z-index: 100;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
 }
-.prog-bar { width: 200px; height: 6px; background: var(--panel); border-radius: 3px; overflow: hidden; }
+.prog-bar { width: 220px; height: 6px; background: var(--panel); border-radius: 3px; overflow: hidden; border: 1px solid var(--border); }
 .prog-fill { height: 100%; width: 0%; background: var(--tv); transition: width 0.3s; }
-.empty { text-align: center; padding: 60px 20px; color: var(--soft); font-size: 16px; }
+.empty { text-align: center; padding: 60px 20px; color: var(--soft); font-size: 17px; font-weight: 500; }
 </style>
 </head>
 <body>
 
 <div id="loading">
-  <div style="font-size: 40px">📺</div>
+  <div style="font-size: 44px">📺</div>
   <div class="prog-bar"><div class="prog-fill" id="prog"></div></div>
   <div style="color: var(--soft); font-weight: 600;" id="prog-text">Lade Sender...</div>
 </div>
@@ -208,7 +227,7 @@ var activeSeriesData = null;
 // Lokale Speicher (Favoriten, Verlauf & Eigene Listen)
 var favs = JSON.parse(localStorage.getItem('tv_favs')) || {}; 
 var recent = JSON.parse(localStorage.getItem('tv_recent')) || []; 
-var customLists = JSON.parse(localStorage.getItem('tv_custom_lists')) || {}; // Format: { "ListenName": [{name, logo, url, type}, ...] }
+var customLists = JSON.parse(localStorage.getItem('tv_custom_lists')) || {}; 
 
 function saveStorage() {
   localStorage.setItem('tv_favs', JSON.stringify(favs));
@@ -296,77 +315,59 @@ function toggleFav(e, url, name, logo, type) {
   saveStorage(); render();
 }
 
-// 🔥 Logik für den Klick auf den Listen-Button
 function handleListClick(e, url, name, logo, type) {
   e.stopPropagation();
-  
-  // Szenario A: Wir befinden uns in einer Custom List -> Element löschen
   if (customLists[activeGroup]) {
     if (confirm(`Möchtest du "${getShortName(name)}" aus der Liste "${activeGroup}" entfernen?`)) {
       customLists[activeGroup] = customLists[activeGroup].filter(item => item.url !== url);
-      
-      // Wenn die Liste jetzt komplett leer ist, lösche sie ganz
       if (customLists[activeGroup].length === 0) {
         delete customLists[activeGroup];
-        saveStorage();
-        goBack(); // Zurück ins Hauptmenü
+        saveStorage(); goBack();
       } else {
-        saveStorage();
-        render();
+        saveStorage(); render();
       }
     }
-  } 
-  // Szenario B: Wir sind irgendwo anders -> Zu Liste hinzufügen
-  else {
+  } else {
     openListSelector(url, name, logo, type);
   }
 }
 
-// 🔥 Der smarte Listen-Wähler
 function openListSelector(url, name, logo, type) {
   let listNames = Object.keys(customLists).sort();
   let msg = "In welche eigene Liste möchtest du diesen Titel packen?\n\n";
   
   if (listNames.length > 0) {
     msg += "Vorhandene Listen:\n" + listNames.map((l, i) => `${i + 1}. ${l}`).join("\n") + "\n\n";
-    msg += "Gib die NUMMER einer Liste ein ODER tippe einen NEUEN Listennamen ein:";
+    msg += "Gib die NUMMER ein ODER tippe einen NEUEN Namen ein:";
   } else {
-    msg += "Du hast noch keine eigenen Listen.\nTippe hier einfach den Namen für deine neue Liste ein:";
+    msg += "Tippe hier den Namen für deine neue Liste ein:";
   }
   
   let choice = prompt(msg);
-  if (!choice) return; // Abgebrochen
+  if (!choice) return; 
   
   let targetList = choice.trim();
   if (targetList === "") return;
   
-  // Falls eine Nummer eingegeben wurde, weise den zugehörigen Listennamen zu
   if (listNames.length > 0 && /^\d+$/.test(targetList)) {
     let idx = parseInt(targetList) - 1;
-    if (idx >= 0 && idx < listNames.length) {
-      targetList = listNames[idx];
-    }
+    if (idx >= 0 && idx < listNames.length) targetList = listNames[idx];
   }
   
-  // Systemnamen sperren, damit nichts überschrieben wird
   if (["⭐ Favoriten", "🕒 Zuletzt gesehen", "Kategorien", "Suchergebnisse"].includes(targetList)) {
-    alert("Dieser Name ist vom System reserviert.");
-    return;
+    alert("Dieser Name ist vom System reserviert."); return;
   }
   
-  if (!customLists[targetList]) {
-    customLists[targetList] = [];
-  }
+  if (!customLists[targetList]) customLists[targetList] = [];
   
-  // Duplikate in dieser spezifischen Liste verhindern
   let exists = customLists[targetList].some(item => item.url === url);
   if (!exists) {
     customLists[targetList].push({ name: name, logo: logo, url: url, type: type });
     saveStorage();
-    alert(`"${getShortName(name)}" wurde erfolgreich zur Liste "${targetList}" hinzugefügt!`);
+    alert(`Titel wurde zur Liste "${targetList}" hinzugefügt!`);
     render();
   } else {
-    alert(`Dieser Titel existiert bereits in der Liste "${targetList}".`);
+    alert(`Dieser Titel ist bereits in der Liste.`);
   }
 }
 
@@ -457,7 +458,6 @@ function render() {
                </div>`;
     }
 
-    // 🔥 NEU: Eigene Listen direkt nach den Favoriten einblenden (sofern sie Inhalte für diesen Tab haben)
     Object.keys(customLists).sort().forEach(listName => {
       let listItems = customLists[listName].filter(c => c.type === currentTab);
       if (listItems.length > 0) {
@@ -485,7 +485,6 @@ function render() {
     var chans = [];
     if (activeGroup === '⭐ Favoriten') chans = Object.values(favs).filter(c => c.type === currentTab);
     else if (activeGroup === '🕒 Zuletzt gesehen') chans = recent.filter(c => c.type === currentTab);
-    // Wenn es eine Custom List ist, lade deren gefilterten Inhalt
     else if (customLists[activeGroup]) chans = customLists[activeGroup].filter(c => c.type === currentTab);
     else chans = db[currentTab][activeGroup] || [];
 
@@ -501,8 +500,6 @@ function renderChannelCard(ch, isPortrait) {
   var isFav = favs[ch.url] ? "active" : "";
   var favIcon = favs[ch.url] ? "♥" : "♡";
   var cardClass = isPortrait ? "ch-card portrait" : "ch-card";
-  
-  // 🔥 Ändere das Icon dynamisch: Wenn wir uns IN dieser Liste befinden, zeige ein "×" zum Löschen, sonst ein "＋" zum Hinzufügen
   var listIcon = customLists[activeGroup] ? "×" : "＋";
 
   return `<div class="${cardClass}" onclick="playItem('${escJS(ch.url)}', '${escJS(ch.name)}', '${escJS(ch.logo)}', '${ch.type}')">
@@ -524,48 +521,4 @@ function renderEpisodesView() {
   
   var html = "";
   seasons.forEach(s => {
-     html += `<div class="season-title">Staffel ${s}</div>`;
-     let eps = epsObj[s] || [];
-     eps.forEach(ep => {
-         let ext = ep.container_extension || "mkv";
-         let playUrl = `${xcCredentials.server}/series/${xcCredentials.user}/${xcCredentials.pass}/${ep.id}.${ext}`;
-         let title = ep.title || `Episode ${ep.episode_num}`;
-         html += `
-         <div class="ep-card" onclick="window.location.href='outplayer://${esc(playUrl)}'">
-            <div class="ep-num">${ep.episode_num}</div>
-            <div class="ep-info">
-               <div class="ep-title">${esc(title)}</div>
-               <div class="ep-play">▶ Im Outplayer abspielen</div>
-            </div>
-         </div>`;
-     });
-  });
-  return html;
-}
-
-// ── INIT ──
-async function loadData() {
-  try {
-    var res = await fetch(M3U_URL);
-    if (!res.ok) throw new Error();
-    var text = await res.text();
-    db = parseM3U(text);
-    
-    ["tv","mov","ser"].forEach(t => {
-      var sum = 0; Object.values(db[t]).forEach(arr => sum += arr.length);
-      document.getElementById("cnt-"+t).textContent = sum;
-    });
-
-    document.getElementById("loading").style.display = "none";
-    document.getElementById("app-header").style.display = "block";
-    render();
-  } catch(e) {
-    document.getElementById("prog-text").textContent = "Fehler (liste2.m3u fehlt?)";
-    document.getElementById("prog").style.background = "#FF3B30";
-  }
-}
-
-loadData();
-</script>
-</body>
-</html>
+     html += `<div class="season-title
